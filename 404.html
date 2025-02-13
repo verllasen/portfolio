@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Ошибка 404</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #212121;
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+        .error-container {
+            text-align: center;
+        }
+        h1 {
+            font-size: 8em;
+            margin: 0;
+            animation: glitch 1s infinite;
+        }
+        p {
+            font-size: 1.5em;
+        }
+        .back-btn {
+            padding: 15px 40px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 30px;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 2px 2px red; }
+            25% { text-shadow: -2px -2px blue; }
+            50% { text-shadow: 2px -2px green; }
+            75% { text-shadow: -2px 2px yellow; }
+            100% { text-shadow: 2px 2px red; }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1>404</h1>
+        <p>Неверный ответ! Сердце не найдено ❤️</p>
+        <button class="back-btn" onclick="window.history.back()">Вернуться назад</button>
+    </div>
+</body>
+</html>

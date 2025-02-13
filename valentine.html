@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>С Днём Святого Валентина!</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .container {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .heart {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 30px auto;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            transform-style: preserve-3d;
+            animation: heartbeat 1.5s ease-in-out infinite, rotate3D 5s infinite linear;
+        }
+
+        .heart.explode {
+            animation: explodeHeart 1s forwards;
+        }
+
+        .mini-heart {
+            position: absolute;
+            font-size: 24px;
+            color: #ff0000;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .heart:hover {
+            transform: scale(1.2);
+        }
+
+        .heart::before,
+        .heart::after {
+            content: '';
+            position: absolute;
+            width: 52px;
+            height: 80px;
+            border-radius: 50px 50px 0 0;
+            background: linear-gradient(45deg, #ff0000, #ff6b6b);
+            left: 50px;
+            transform: rotate(-45deg);
+            transform-origin: 0 100%;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+            backface-visibility: visible;
+        }
+
+        .heart::after {
+            left: 0;
+            transform: rotate(45deg);
+            transform-origin: 100% 100%;
+        }
+
+        .message {
+            color: white;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin: 20px;
+            opacity: 0;
+            animation: fadeIn 2s ease-in-out forwards;
+        }
+
+        .floating-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .floating-heart {
+            position: absolute;
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            animation: float 6s linear infinite;
+        }
+
+        .sub-message {
+            color: white;
+            font-size: 1.2em;
+            margin-top: 20px;
+            opacity: 0;
+            animation: fadeIn 2s ease-in-out 1s forwards;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle 1.5s linear forwards;
+        }
+
+        .butterfly {
+            position: absolute;
+            font-size: 24px;
+            pointer-events: none;
+            transition: transform 0.3s ease;
+            z-index: 2;
+        }
+
+        .music-note {
+            position: absolute;
+            font-size: 24px;
+            color: white;
+            opacity: 0;
+            animation: floatNote 3s linear forwards;
+        }
+
+        .glow {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,182,193,0.4) 0%, rgba(255,182,193,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.1); }
+            50% { transform: scale(1); }
+            75% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes sparkle {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) rotate(180deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes floatNote {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+
+        @keyframes explodeHeart {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.5);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes miniHeartFloat {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) rotate(var(--rot));
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-hearts"></div>
+    <div class="container">
+        <div class="heart"></div>
+        <div class="message">С Днём Святого Валентина!</div>
+        <div class="sub-message">Ты - самое прекрасное, что есть в моей жизни ❤️</div>
+    </div>
+
+    <script>
+        function createFloatingHearts() {
+            const container = document.querySelector('.floating-hearts');
+            const heart = document.createElement('div');
+            heart.innerHTML = '❤';
+            heart.className = 'floating-heart';
+            
+            const startPos = Math.random() * 100;
+            heart.style.left = startPos + 'vw';
+            
+            const duration = 6 + Math.random() * 4;
+            heart.style.animationDuration = duration + 's';
+            
+            container.appendChild(heart);
+            
+            setTimeout(() => {
+                heart.remove();
+            }, duration * 1000);
+        }
+
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.style.left = x + 'px';
+            sparkle.style.top = y + 'px';
+            document.body.appendChild(sparkle);
+            
+            setTimeout(() => {
+                sparkle.remove();
+            }, 1500);
+        }
+
+        function createMusicNote() {
+            const notes = ['♪', '♫', '♬', '♩'];
+            const note = document.createElement('div');
+            note.className = 'music-note';
+            note.textContent = notes[Math.floor(Math.random() * notes.length)];
+            note.style.left = Math.random() * window.innerWidth + 'px';
+            note.style.top = window.innerHeight + 'px';
+            document.body.appendChild(note);
+
+            setTimeout(() => {
+                note.remove();
+            }, 3000);
+        }
+
+        function createButterfly() {
+            const butterfly = document.createElement('div');
+            butterfly.className = 'butterfly';
+            butterfly.textContent = '🦋';
+            butterfly.style.left = Math.random() * window.innerWidth + 'px';
+            butterfly.style.top = Math.random() * window.innerHeight + 'px';
+            document.body.appendChild(butterfly);
+
+            let angle = 0;
+            const radius = 50;
+            const centerX = parseFloat(butterfly.style.left);
+            const centerY = parseFloat(butterfly.style.top);
+
+            function animate() {
+                angle += 0.02;
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                butterfly.style.left = x + 'px';
+                butterfly.style.top = y + 'px';
+                butterfly.style.transform = `rotate(${angle * 30}deg)`;
+
+                if (angle < Math.PI * 4) {
+                    requestAnimationFrame(animate);
+                } else {
+                    butterfly.remove();
+                }
+            }
+
+            animate();
+        }
+
+        // Mouse move effect
+        const glow = document.createElement('div');
+        glow.className = 'glow';
+        document.body.appendChild(glow);
+
+        document.addEventListener('mousemove', (e) => {
+            glow.style.left = e.pageX + 'px';
+            glow.style.top = e.pageY + 'px';
+            
+            if (Math.random() < 0.1) {
+                createSparkle(e.pageX, e.pageY);
+            }
+        });
+
+        // Click effects
+        document.addEventListener('click', (e) => {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    createSparkle(e.pageX + (Math.random() - 0.5) * 50,
+                                e.pageY + (Math.random() - 0.5) * 50);
+                }, i * 100);
+            }
+            createMusicNote();
+            createButterfly();
+        });
+
+        // Heart click effect
+        const mainHeart = document.querySelector('.heart');
+        mainHeart.addEventListener('click', () => {
+            // Create explosion effect
+            mainHeart.classList.add('explode');
+            setTimeout(() => mainHeart.classList.remove('explode'), 1000);
+
+            // Create mini hearts explosion
+            for (let i = 0; i < 20; i++) {
+                const miniHeart = document.createElement('div');
+                miniHeart.className = 'mini-heart';
+                miniHeart.textContent = '❤';
+                miniHeart.style.position = 'absolute';
+                miniHeart.style.left = (mainHeart.offsetLeft + mainHeart.offsetWidth/2) + 'px';
+                miniHeart.style.top = (mainHeart.offsetTop + mainHeart.offsetHeight/2) + 'px';
+                
+                // Random direction and rotation
+                const angle = (Math.random() * Math.PI * 2);
+                const distance = 100 + Math.random() * 150;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                const rotation = Math.random() * 360;
+                
+                miniHeart.style.setProperty('--tx', `${tx}px`);
+                miniHeart.style.setProperty('--ty', `${ty}px`);
+                miniHeart.style.setProperty('--rot', `${rotation}deg`);
+                
+                miniHeart.style.animation = 'miniHeartFloat 1s ease-out forwards';
+                
+                document.body.appendChild(miniHeart);
+                
+                setTimeout(() => miniHeart.remove(), 1000);
+            }
+
+            // Add sparkle effect
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    createSparkle(
+                        mainHeart.offsetLeft + mainHeart.offsetWidth/2 + (Math.random() - 0.5) * 150,
+                        mainHeart.offsetTop + mainHeart.offsetHeight/2 + (Math.random() - 0.5) * 150
+                    );
+                }, i * 50);
+            }
+
+            createButterfly();
+            createMusicNote();
+        });
+
+        setInterval(createFloatingHearts, 300);
+        setInterval(createMusicNote, 5000);
+        setInterval(createButterfly, 8000);
+    </script>
+    <audio id="backgroundMusic" loop>
+        <source src="assets/blue.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+        </audio>
+</body>
+</html>
