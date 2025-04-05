@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2196f3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Морской бой</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+</head>
+<body>
+    <div class="container">
+        <div class="mobile-menu">
+            <button class="mobile-menu-button" id="toggle-stats">Статистика</button>
+            <button class="mobile-menu-button" id="toggle-chat">Чат</button>
+            <button class="mobile-menu-button" id="toggle-ships">Корабли</button>
+        </div>
+
+        <div class="game-area">
+            <div class="game-stats mobile-hidden">
+                <div class="stat-item">
+                    <h4>Попадания</h4>
+                    <div class="stat-value" data-stat="hits">0</div>
+                </div>
+                <div class="stat-item">
+                    <h4>Промахи</h4>
+                    <div class="stat-value" data-stat="misses">0</div>
+                </div>
+                <div class="stat-item">
+                    <h4>Корабли</h4>
+                    <div class="stat-value" data-stat="ships">0</div>
+                </div>
+                <div class="stat-item">
+                    <h4>Точность</h4>
+                    <div class="stat-value" data-stat="accuracy">0%</div>
+                </div>
+            </div>
+
+            <div class="boards">
+                <div class="board-container">
+                    <h3>Ваше поле</h3>
+                    <div class="board" id="player-board">
+                        <!-- Игровое поле будет создано через JavaScript -->
+                    </div>
+                </div>
+                <div class="board-container">
+                    <h3>Поле противника</h3>
+                    <div class="board" id="opponent-board">
+                        <!-- Игровое поле будет создано через JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="ship-placement mobile-hidden">
+                <h3>Расстановка кораблей</h3>
+                <div class="ships">
+                    <div class="ship" data-size="4">4-палубный</div>
+                    <div class="ship" data-size="3">3-палубный</div>
+                    <div class="ship" data-size="3">3-палубный</div>
+                    <div class="ship" data-size="2">2-палубный</div>
+                    <div class="ship" data-size="2">2-палубный</div>
+                    <div class="ship" data-size="2">2-палубный</div>
+                    <div class="ship" data-size="1">1-палубный</div>
+                    <div class="ship" data-size="1">1-палубный</div>
+                    <div class="ship" data-size="1">1-палубный</div>
+                    <div class="ship" data-size="1">1-палубный</div>
+                </div>
+                <div class="placement-controls">
+                    <button id="rotate-ship">Повернуть</button>
+                    <button id="random-placement">Случайная расстановка</button>
+                    <button id="start-game">Начать игру</button>
+                </div>
+            </div>
+
+            <div class="chat-area mobile-hidden">
+                <div class="messages">
+                    <!-- Сообщения будут добавляться через JavaScript -->
+                </div>
+                <div class="input-area">
+                    <input type="text" placeholder="Введите сообщение...">
+                    <button id="send-message">Отправить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
