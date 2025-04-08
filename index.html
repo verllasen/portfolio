@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шашки</title>
+    <style>
+        :root {
+            --cell-size: min(10vw, 50px);
+            --piece-size: calc(var(--cell-size) * 0.8);
+            --board-padding: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .app-container {
+            max-width: 100%;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-header {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .game-mode {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            background: #0088cc;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mode-btn.active {
+            background: #006699;
+        }
+
+        .game-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .board-container {
+            background: white;
+            border-radius: 15px;
+            padding: var(--board-padding);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, var(--cell-size));
+            gap: 2px;
+            background-color: #333;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cell.white {
+            background-color: #f0d9b5;
+        }
+
+        .cell.black {
+            background-color: #b58863;
+        }
+
+        .piece {
+            width: var(--piece-size);
+            height: var(--piece-size);
+            border-radius: 50%;
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .piece.white {
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .piece.black {
+            background: linear-gradient(135deg, #000000, #333333);
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+
+        .piece.king::after {
+            content: '👑';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: calc(var(--piece-size) * 0.5);
+        }
+
+        .selected {
+            box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.7);
+            transform: scale(1.1);
+        }
+
+        .possible-move {
+            box-shadow: 0 0 15px 5px rgba(0, 255, 0, 0.5);
+        }
+
+        .game-info {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.2em;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-messages {
+            margin-bottom: 10px;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .emoji-picker {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .emoji-picker.show {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+        }
+
+        .emoji-btn {
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 5px;
+            border: none;
+            background: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: #0088cc;
+            color: white;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background-color: #006699;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 600px) {
+            :root {
+                --cell-size: min(12vw, 40px);
+            }
+
+            .game-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .game-mode {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="game-header">
+            <h1>🎲 Шашки</h1>
+            <div class="game-mode">
+                <button class="mode-btn active" onclick="setGameMode('bot')">🤖 Против бота</button>
+                <button class="mode-btn" onclick="setGameMode('online')">🌐 Онлайн игра</button>
+            </div>
+        </div>
+
+        <div class="game-content">
+            <div class="board-container">
+                <div class="board" id="board"></div>
+            </div>
+
+            <div class="game-info" id="gameInfo">Ход белых</div>
+
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="Введите сообщение...">
+                    <button onclick="toggleEmojiPicker()">😊</button>
+                    <button onclick="sendMessage()">Отправить</button>
+                </div>
+                <div class="emoji-picker" id="emojiPicker">
+                    <!-- Эмодзи будут добавлены через JavaScript -->
+                </div>
+            </div>
+
+            <div class="controls">
+                <button onclick="surrender()">🏳️ Сдаться</button>
+                <button onclick="newGame()">🔄 Новая игра</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let board = [];
+        let selectedPiece = null;
+        let currentPlayer = 'white';
+        let possibleMoves = [];
+        let gameMode = 'bot';
+        let isOnlineGame = false;
+        let opponentId = null;
+        let emojis = ['😊', '😂', '😍', '😎', '🤔', '😴', '😡', '😱', '👏', '🎉', '💪', '🔥', '❤️', '👍', '👎'];
+
+        function initBoard() {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+            board = Array(8).fill().map(() => Array(8).fill(null));
+
+            // Расстановка белых шашек
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if ((row + col) % 2 === 1) {
+                        board[row][col] = { color: 'white', isKing: false };
+                    }
+                }
+            }
+
+            // Расстановка черных шашек
+            for (let row = 5; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if ((row + col) % 2 === 1) {
+                        board[row][col] = { color: 'black', isKing: false };
+                    }
+                }
+            }
+
+            renderBoard();
+            initEmojiPicker();
+        }
+
+        function initEmojiPicker() {
+            const picker = document.getElementById('emojiPicker');
+            emojis.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.className = 'emoji-btn';
+                btn.textContent = emoji;
+                btn.onclick = () => insertEmoji(emoji);
+                picker.appendChild(btn);
+            });
+        }
+
+        function toggleEmojiPicker() {
+            const picker = document.getElementById('emojiPicker');
+            picker.classList.toggle('show');
+        }
+
+        function insertEmoji(emoji) {
+            const input = document.getElementById('messageInput');
+            input.value += emoji;
+            input.focus();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (message) {
+                addMessage(message);
+                // Отправляем сообщение в Telegram
+                sendToTelegram({
+                    type: 'chat_message',
+                    message: message
+                });
+                input.value = '';
+            }
+        }
+
+        function addMessage(message) {
+            const chat = document.getElementById('chatMessages');
+            const messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            chat.appendChild(messageElement);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function setGameMode(mode) {
+            gameMode = mode;
+            isOnlineGame = mode === 'online';
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            newGame();
+        }
+
+        function renderBoard() {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = `cell ${(row + col) % 2 === 0 ? 'white' : 'black'}`;
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+
+                    if (board[row][col]) {
+                        const piece = document.createElement('div');
+                        piece.className = `piece ${board[row][col].color} ${board[row][col].isKing ? 'king' : ''}`;
+                        cell.appendChild(piece);
+                    }
+
+                    if (selectedPiece && selectedPiece.row === row && selectedPiece.col === col) {
+                        cell.classList.add('selected');
+                    }
+
+                    if (possibleMoves.some(move => move.row === row && move.col === col)) {
+                        cell.classList.add('possible-move');
+                    }
+
+                    cell.addEventListener('click', () => handleCellClick(row, col));
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+
+        function handleCellClick(row, col) {
+            const piece = board[row][col];
+
+            if (isOnlineGame && piece && piece.color !== currentPlayer) {
+                addMessage('❌ Сейчас не ваш ход!');
+                return;
+            }
+
+            if (selectedPiece) {
+                const move = possibleMoves.find(m => m.row === row && m.col === col);
+                if (move) {
+                    makeMove(selectedPiece.row, selectedPiece.col, row, col);
+                    selectedPiece = null;
+                    possibleMoves = [];
+                    currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+                    document.getElementById('gameInfo').textContent = `Ход ${currentPlayer === 'white' ? 'белых' : 'черных'}`;
+                    renderBoard();
+                } else {
+                    selectedPiece = null;
+                    possibleMoves = [];
+                    renderBoard();
+                }
+            } else if (piece && piece.color === currentPlayer) {
+                selectedPiece = { row, col };
+                possibleMoves = getPossibleMoves(row, col);
+                renderBoard();
+            }
+        }
+
+        function makeBotMove() {
+            // Простая логика бота
+            const moves = [];
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    if (board[row][col] && board[row][col].color === 'black') {
+                        const pieceMoves = getPossibleMoves(row, col);
+                        moves.push(...pieceMoves.map(move => ({ from: { row, col }, to: move })));
+                    }
+                }
+            }
+
+            if (moves.length > 0) {
+                const randomMove = moves[Math.floor(Math.random() * moves.length)];
+                makeMove(randomMove.from.row, randomMove.from.col, randomMove.to.row, randomMove.to.col);
+                currentPlayer = 'white';
+                document.getElementById('gameInfo').textContent = 'Ход белых';
+                renderBoard();
+            }
+        }
+
+        function getPossibleMoves(row, col) {
+            const piece = board[row][col];
+            const moves = [];
+            const directions = piece.isKing ? 
+                [[-1, -1], [-1, 1], [1, -1], [1, 1]] :
+                piece.color === 'white' ? [[1, -1], [1, 1]] : [[-1, -1], [-1, 1]];
+
+            for (const [dr, dc] of directions) {
+                let newRow = row + dr;
+                let newCol = col + dc;
+
+                if (isValidPosition(newRow, newCol) && !board[newRow][newCol]) {
+                    moves.push({ row: newRow, col: newCol });
+                } else if (isValidPosition(newRow, newCol) && board[newRow][newCol].color !== piece.color) {
+                    newRow += dr;
+                    newCol += dc;
+                    if (isValidPosition(newRow, newCol) && !board[newRow][newCol]) {
+                        moves.push({ row: newRow, col: newCol, capture: true });
+                    }
+                }
+            }
+
+            return moves;
+        }
+
+        function isValidPosition(row, col) {
+            return row >= 0 && row < 8 && col >= 0 && col < 8;
+        }
+
+        function makeMove(fromRow, fromCol, toRow, toCol) {
+            const piece = board[fromRow][fromCol];
+            board[fromRow][fromCol] = null;
+            board[toRow][toCol] = piece;
+
+            if ((piece.color === 'white' && toRow === 7) || (piece.color === 'black' && toRow === 0)) {
+                piece.isKing = true;
+                addMessage(`🎉 ${piece.color === 'white' ? 'Белая' : 'Черная'} шашка стала дамкой!`);
+            }
+
+            const move = possibleMoves.find(m => m.row === toRow && m.col === toCol);
+            if (move && move.capture) {
+                const capturedRow = (fromRow + toRow) / 2;
+                const capturedCol = (fromCol + toCol) / 2;
+                board[capturedRow][capturedCol] = null;
+                addMessage(`💥 ${piece.color === 'white' ? 'Белая' : 'Черная'} шашка съела шашку противника!`);
+            }
+
+            // Отправляем ход в Telegram для онлайн игры
+            if (isOnlineGame) {
+                sendToTelegram({
+                    type: 'move',
+                    from: { row: fromRow, col: fromCol },
+                    to: { row: toRow, col: toCol }
+                });
+            }
+
+            // Проверка окончания игры
+            if (isGameOver()) {
+                const winner = getWinner();
+                if (winner) {
+                    addMessage(`🏆 Игра окончена! Победили ${winner === 'white' ? 'белые' : 'черные'}!`);
+                    sendToTelegram({
+                        type: 'game_result',
+                        winner: winner
+                    });
+                } else {
+                    addMessage('🤝 Игра окончена вничью!');
+                    sendToTelegram({
+                        type: 'game_result',
+                        winner: null
+                    });
+                }
+            } else if (!isOnlineGame && gameMode === 'bot') {
+                setTimeout(makeBotMove, 500);
+            }
+        }
+
+        function sendToTelegram(data) {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.sendData(JSON.stringify(data));
+            }
+        }
+
+        function surrender() {
+            if (confirm('Вы уверены, что хотите сдаться?')) {
+                addMessage(`🏳️ Игрок ${currentPlayer === 'white' ? 'белых' : 'черных'} сдался!`);
+                alert(`Игра окончена! Победили ${currentPlayer === 'white' ? 'черные' : 'белые'}!`);
+                newGame();
+            }
+        }
+
+        function newGame() {
+            currentPlayer = 'white';
+            selectedPiece = null;
+            possibleMoves = [];
+            document.getElementById('gameInfo').textContent = 'Ход белых';
+            addMessage('🔄 Начата новая игра!');
+            initBoard();
+        }
+
+        // Инициализация игры при загрузке
+        window.onload = initBoard;
+
+        // Обработка нажатия Enter в чате
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Обработка сообщений от Telegram
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.onEvent('web_app_data_received', (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'move') {
+                    const { from, to } = data;
+                    makeMove(from.row, from.col, to.row, to.col);
+                } else if (data.type === 'game_start') {
+                    isOnlineGame = true;
+                    opponentId = data.opponent_id;
+                    currentPlayer = data.your_color;
+                    document.getElementById('gameInfo').textContent = `Ход ${currentPlayer === 'white' ? 'белых' : 'черных'}`;
+                    addMessage('🎮 Игра началась!');
+                }
+            });
+        }
+    </script>
+</body>
+</html> 
