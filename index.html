@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieHub - Лучшие фильмы онлайн</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-film"></i>
+                <span>MovieHub</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#home" class="nav-link active">Главная</a>
+                <a href="#movies" class="nav-link">Фильмы</a>
+                <a href="#series" class="nav-link">Сериалы</a>
+                <a href="#genres" class="nav-link">Жанры</a>
+                <a href="#top" class="nav-link">Топ</a>
+            </div>
+            <div class="nav-actions">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Поиск фильмов, сериалов, актеров...">
+                    <i class="fas fa-search"></i>
+                    <div class="search-suggestions" id="searchSuggestions">
+                        <!-- Suggestions will be populated by JavaScript -->
+                    </div>
+                </div>
+                <button class="theme-toggle" id="themeToggle" title="Переключить тему">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="favorites-btn" id="favoritesBtn" title="Избранное">
+                    <i class="fas fa-heart"></i>
+                    <span class="favorites-count">0</span>
+                </button>
+                <div class="user-dropdown">
+                    <button class="user-btn" id="userBtn" title="Профиль">
+                        <i class="fas fa-user"></i>
+                    </button>
+                    <div class="user-menu" id="userMenu">
+                        <a href="#" class="user-menu-item">
+                            <i class="fas fa-user"></i>
+                            Профиль
+                        </a>
+                        <a href="#" class="user-menu-item">
+                            <i class="fas fa-download"></i>
+                            Мои скачивания
+                        </a>
+                        <a href="#" class="user-menu-item">
+                            <i class="fas fa-cog"></i>
+                            Настройки
+                        </a>
+                        <a href="#" class="user-menu-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Выйти
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mobile-menu-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1 class="hero-title">Добро пожаловать в <span class="gradient-text">MovieHub</span></h1>
+            <p class="hero-subtitle">Откройте для себя лучшие фильмы и сериалы в высоком качестве</p>
+            <div class="hero-search">
+                <input type="text" id="heroSearch" placeholder="Найти фильм, сериал, актера...">
+                <button class="search-btn">
+                    <i class="fas fa-search"></i>
+                    Найти
+                </button>
+            </div>
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-number" id="totalMovies">0</span>
+                    <span class="stat-label">Фильмов</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" id="totalSeries">0</span>
+                    <span class="stat-label">Сериалов</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number" id="totalUsers">0</span>
+                    <span class="stat-label">Пользователей</span>
+                </div> 
+            </div>
+        </div>
+        <div class="hero-background">
+            <div class="floating-card" style="--delay: 0s">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="floating-card" style="--delay: 1s">
+                <i class="fas fa-play"></i>
+            </div>
+            <div class="floating-card" style="--delay: 2s">
+                <i class="fas fa-heart"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-background">
+            <div class="gradient-orb orb-1"></div>
+            <div class="gradient-orb orb-2"></div>
+            <div class="gradient-orb orb-3"></div>
+        </div>
+        
+        <div class="loading-container">
+            <div class="loading-logo">
+                <div class="logo-wrapper">
+                    <div class="logo-ring">
+                        <div class="logo-ring-inner"></div>
+                    </div>
+                    <div class="logo-icon">
+                        <i class="fas fa-play"></i>
+                    </div>
+                </div>
+                <h1 class="logo-text">MovieHub</h1>
+                <p class="logo-subtitle">Ваш кинотеатр онлайн</p>
+            </div>
+            
+            <div class="loading-progress-container">
+                <div class="progress-wrapper">
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressFill"></div>
+                        <div class="progress-glow"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span class="loading-text" id="loadingText">Инициализация...</span>
+                        <span class="loading-percentage" id="loadingPercentage">0%</span>
+                    </div>
+                </div>
+                
+                <div class="loading-tips" id="loadingTips">
+                    <p>Подготавливаем лучшие фильмы для вас...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="loading-particles">
+            <div class="particle" style="--delay: 0s; --duration: 4s;"></div>
+            <div class="particle" style="--delay: 0.8s; --duration: 5s;"></div>
+            <div class="particle" style="--delay: 1.6s; --duration: 4.5s;"></div>
+            <div class="particle" style="--delay: 2.4s; --duration: 5.5s;"></div>
+            <div class="particle" style="--delay: 3.2s; --duration: 4.2s;"></div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <section class="filter-section">
+        <div class="container">
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">Все</button>
+                <button class="filter-tab" data-filter="action">Боевик</button>
+                <button class="filter-tab" data-filter="comedy">Комедия</button>
+                <button class="filter-tab" data-filter="drama">Драма</button>
+                <button class="filter-tab" data-filter="horror">Ужасы</button>
+                <button class="filter-tab" data-filter="sci-fi">Фантастика</button>
+                <button class="filter-tab" data-filter="romance">Романтика</button>
+            </div>
+            <div class="filter-controls">
+                <select id="yearFilter" class="filter-select">
+                    <option value="">Все годы</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                </select>
+                <select id="ratingFilter" class="filter-select">
+                    <option value="">Все рейтинги</option>
+                    <option value="9">9+</option>
+                    <option value="8">8+</option>
+                    <option value="7">7+</option>
+                    <option value="6">6+</option>
+                </select>
+                <button class="sort-btn" id="sortBtn">
+                    <i class="fas fa-sort"></i>
+                    Сортировать
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Movies Grid -->
+    <section class="movies-section" id="movies">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Популярные фильмы</h2>
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="grid">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button class="view-btn" data-view="list">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="movies-grid" id="moviesGrid">
+                <!-- Movies will be dynamically loaded here -->
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    <span id="paginationInfo">Показано 1-12 из 1 фильмов</span>
+                </div>
+                <div class="pagination" id="pagination">
+                    <!-- Pagination buttons will be populated here -->
+                </div>
+                <div class="pagination-settings">
+                    <label for="moviesPerPage">Фильмов на странице:</label>
+                    <select id="moviesPerPage">
+                        <option value="12">12</option>
+                        <option value="24" selected>24</option>
+                        <option value="48">48</option>
+                        <option value="96">96</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Section -->
+    <section class="featured-section">
+        <div class="featured-background">
+            <div class="featured-gradient-orb orb-1"></div>
+            <div class="featured-gradient-orb orb-2"></div>
+            <div class="featured-gradient-orb orb-3"></div>
+        </div>
+        <div class="container">
+            <div class="featured-header">
+                <h2 class="featured-title">
+                    <span class="title-icon">
+                        <i class="fas fa-star"></i>
+                    </span>
+                    Рекомендуем к просмотру
+                </h2>
+                <p class="featured-subtitle">Лучшие фильмы и сериалы, отобранные специально для вас</p>
+            </div>
+            <div class="featured-grid" id="featuredGrid">
+                <!-- Featured movies will be populated by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3><i class="fas fa-film"></i> MovieHub</h3>
+                    <p>Лучшая платформа для скачивания фильмов и сериалов в высоком качестве.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Категории</h4>
+                    <ul>
+                        <li><a href="#movies">Фильмы</a></li>
+                        <li><a href="#series">Сериалы</a></li>
+                        <li><a href="#movies">Популярные</a></li>
+                        <li><a href="#movies">Новинки</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Поддержка</h4>
+                    <ul>
+                        <li><a href="#">Помощь</a></li>
+                        <li><a href="#">Контакты</a></li>
+                        <li><a href="#">Обратная связь</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 MovieHub. Все права защищены.</p>
+                <div class="footer-links">
+                    <a href="#">Политика конфиденциальности</a>
+                    <a href="#">Условия использования</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Movie Modal -->
+    <div class="modal" id="movieModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-body">
+                <div class="modal-poster">
+                    <img id="modalPoster" src="" alt="">
+                    <div class="modal-quality-badge" id="modalQuality"></div>
+                    <div class="modal-rating" id="modalRating">
+                        <i class="fas fa-star"></i>
+                        <span id="modalRatingValue"></span>
+                    </div>
+                </div>
+                <div class="modal-info">
+                    <h2 id="modalTitle"></h2>
+                    <div class="modal-meta">
+                        <span id="modalYear"></span>
+                        <span id="modalDuration"></span>
+                        <span id="modalGenre"></span>
+                    </div>
+                    <p id="modalDescription"></p>
+                    <div class="download-info" id="modalDownloadInfo">
+                        <div class="download-details">
+                            <div class="detail-item">
+                                <i class="fas fa-hdd"></i>
+                                <span id="modalFileSize"></span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-video"></i>
+                                <span id="modalQualityInfo"></span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-file"></i>
+                                <span id="modalFormat"></span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-download"></i>
+                                <span id="modalDownloadCount"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" id="modalDownloadBtn">
+                            <i class="fas fa-download"></i>
+                            Скачать
+                        </button>
+                        <button class="btn btn-secondary" id="modalTrailerBtn">
+                            <i class="fas fa-play"></i>
+                            Трейлер
+                        </button>
+                        <button class="btn btn-secondary" id="addToFavorites">
+                            <i class="fas fa-heart"></i>
+                            В избранное
+                        </button>
+                        <button class="btn btn-secondary" id="modalShareBtn">
+                            <i class="fas fa-share"></i>
+                            Поделиться
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProfileModal()">&times;</span>
+            <div class="modal-body">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="profileName">Пользователь</h2>
+                        <p id="profileEmail">user@example.com</p>
+                        <div class="profile-stats">
+                            <div class="stat">
+                                <span class="stat-number" id="profileDownloads">0</span>
+                                <span class="stat-label">Скачиваний</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number" id="profileFavorites">0</span>
+                                <span class="stat-label">В избранном</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-content">
+                    <div class="profile-section">
+                        <h3>Личная информация</h3>
+                        <div class="form-group">
+                            <label>Имя</label>
+                            <input type="text" id="profileFirstName" value="Иван">
+                        </div>
+                        <div class="form-group">
+                            <label>Фамилия</label>
+                            <input type="text" id="profileLastName" value="Иванов">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="profileEmailInput" value="user@example.com">
+                        </div>
+                    </div>
+                    <div class="profile-actions">
+                        <button class="btn btn-primary" onclick="saveProfile()">
+                            <i class="fas fa-save"></i>
+                            Сохранить
+                        </button>
+                        <button class="btn btn-secondary" onclick="closeProfileModal()">
+                            <i class="fas fa-times"></i>
+                            Отмена
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Downloads Modal -->
+    <div class="modal" id="downloadsModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDownloadsModal()">&times;</span>
+            <div class="modal-body">
+                <div class="downloads-header">
+                    <h2><i class="fas fa-download"></i> Мои скачивания</h2>
+                    <div class="downloads-stats">
+                        <span>Всего скачиваний: <strong id="totalDownloads">0</strong></span>
+                        <span>За последний месяц: <strong id="monthlyDownloads">0</strong></span>
+                    </div>
+                </div>
+                <div class="downloads-content">
+                    <div class="downloads-filters">
+                        <button class="btn btn-sm btn-primary active" data-filter="all">Все</button>
+                        <button class="btn btn-sm btn-secondary" data-filter="movies">Фильмы</button>
+                        <button class="btn btn-sm btn-secondary" data-filter="series">Сериалы</button>
+                        <button class="btn btn-sm btn-secondary" data-filter="recent">Недавние</button>
+                    </div>
+                    <div class="downloads-list" id="downloadsList">
+                        <!-- Downloads will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeSettingsModal()">&times;</span>
+            <div class="modal-body">
+                <div class="settings-header">
+                    <h2><i class="fas fa-cog"></i> Настройки</h2>
+                </div>
+                <div class="settings-content">
+                    <div class="settings-section">
+                        <h3>Внешний вид</h3>
+                        <div class="setting-item">
+                            <label>Тема</label>
+                            <select id="themeSelect">
+                                <option value="dark">Темная</option>
+                                <option value="light">Светлая</option>
+                                <option value="auto">Автоматически</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>Язык</label>
+                            <select id="languageSelect">
+                                <option value="ru">Русский</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Уведомления</h3>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="emailNotifications" checked>
+                                Email уведомления
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="pushNotifications" checked>
+                                Push уведомления
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Скачивания</h3>
+                        <div class="setting-item">
+                            <label>Папка по умолчанию</label>
+                            <input type="text" id="downloadPath" value="C:\Downloads\Movies" readonly>
+                            <button class="btn btn-sm btn-secondary" onclick="selectDownloadPath()">Выбрать</button>
+                        </div>
+                        <div class="setting-item">
+                            <label>Качество по умолчанию</label>
+                            <select id="defaultQuality">
+                                <option value="4K">4K</option>
+                                <option value="1080p" selected>1080p</option>
+                                <option value="720p">720p</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" onclick="saveSettings()">
+                            <i class="fas fa-save"></i>
+                            Сохранить настройки
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetSettings()">
+                            <i class="fas fa-undo"></i>
+                            Сбросить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trailer Modal -->
+    <div class="modal" id="trailerModal">
+        <div class="modal-content trailer-modal-content">
+            <span class="close" onclick="closeTrailerModal()">&times;</span>
+            <div class="trailer-container">
+                <iframe id="trailerIframe" src="" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="movie-manager.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
