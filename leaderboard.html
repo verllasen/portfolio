@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таблица лидеров - Виртуальный Питомец</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #8A2BE2;
+            --secondary-color: #6A5ACD;
+            --accent-color: #FF6B6B;
+            --background-dark: #121212;
+            --background-card: #1E1E1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --gold: #FFD700;
+            --silver: #C0C0C0;
+            --bronze: #CD7F32;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(138, 43, 226, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 50%, rgba(106, 90, 205, 0.1) 0%, transparent 25%),
+                radial-gradient(circle at 40% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 30%);
+        }
+        
+        .container {
+            max-width: 390px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            background-color: var(--background-dark);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.05) 0%, rgba(106, 90, 205, 0.05) 100%);
+            z-index: -1;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 25px 0;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+            transform: skewX(-20deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) skewX(-20deg); }
+            100% { transform: translateX(200%) skewX(-20deg); }
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            margin-top: 5px;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .leaderboard-card {
+            background-color: var(--background-card);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #333;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            animation: fadeIn 0.5s ease forwards;
+            opacity: 0;
+        }
+        
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+        
+        .leaderboard-item:hover {
+            background-color: #2A2A2A;
+            transform: translateY(-3px);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .leaderboard-item:nth-child(1) { animation-delay: 0.1s; }
+        .leaderboard-item:nth-child(2) { animation-delay: 0.2s; }
+        .leaderboard-item:nth-child(3) { animation-delay: 0.3s; }
+        .leaderboard-item:nth-child(4) { animation-delay: 0.4s; }
+        .leaderboard-item:nth-child(5) { animation-delay: 0.5s; }
+        
+        .rank {
+            width: 40px;
+            height: 40px;
+            background-color: #2A2A2A;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 18px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        
+        .rank-1 {
+            background-color: var(--gold);
+            color: #000;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+        
+        .rank-2 {
+            background-color: var(--silver);
+            color: #000;
+            text-shadow: 0 0 5px rgba(192, 192, 192, 0.5);
+        }
+        
+        .rank-3 {
+            background-color: var(--bronze);
+            color: #000;
+            text-shadow: 0 0 5px rgba(205, 127, 50, 0.5);
+        }
+        
+        .pet-info {
+            flex-grow: 1;
+        }
+        
+        .pet-name {
+            font-weight: bold;
+            margin: 0;
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+        
+        .pet-type {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin: 5px 0 0;
+        }
+        
+        .pet-age {
+            font-weight: bold;
+            font-size: 20px;
+            color: var(--accent-color);
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
+        }
+        
+        .back-btn {
+            display: block;
+            width: 100%;
+            padding: 15px 0;
+            background: linear-gradient(135deg, var(--accent-color), #FF4757);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .back-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.15), transparent);
+            z-index: 1;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            position: relative;
+        }
+        
+        .empty-message p {
+            font-size: 16px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .empty-message::before {
+            content: '🏆';
+            position: absolute;
+            font-size: 80px;
+            opacity: 0.1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+        }
+        
+        /* Trophy animation */
+        .trophy {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 40px;
+            animation: float 3s ease-in-out infinite;
+            z-index: 2;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 Таблица лидеров</h1>
+            <p>Самые долгоживущие питомцы</p>
+            <div class="trophy">🏆</div>
+        </div>
+        
+        <div class="leaderboard-card">
+            {% if leaderboard %}
+                {% for pet in leaderboard %}
+                    <div class="leaderboard-item">
+                        <div class="rank {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}">
+                            {{ loop.index }}
+                        </div>
+                        <div class="pet-info">
+                            <p class="pet-name">{{ pet.name }}</p>
+                            <p class="pet-type">{{ pet.type|capitalize }}</p>
+                        </div>
+                        <div class="pet-age">{{ pet.age }} дней</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-message">
+                    <p>Таблица лидеров пуста. Будьте первыми!</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <a href="javascript:history.back()" class="back-btn">Вернуться назад</a>
+    </div>
+    
+    <script>
+        // Add some visual effects when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Highlight the top 3 positions with a subtle glow effect
+            const topRanks = document.querySelectorAll('.rank-1, .rank-2, .rank-3');
+            topRanks.forEach(rank => {
+                rank.style.animation = 'pulse 2s infinite';
+            });
+        });
+        
+        // Define the pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+                70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
