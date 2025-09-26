@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Виртуальный Питомец</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #8A2BE2;
+            --secondary-color: #6A5ACD;
+            --accent-color: #FF6B6B;
+            --background-dark: #121212;
+            --background-card: #1E1E1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(138, 43, 226, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 50%, rgba(106, 90, 205, 0.1) 0%, transparent 25%),
+                radial-gradient(circle at 40% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 30%);
+        }
+        
+        .container {
+            max-width: 390px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            background-color: var(--background-dark);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.05) 0%, rgba(106, 90, 205, 0.05) 100%);
+            z-index: -1;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 25px 0;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+            transform: skewX(-20deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) skewX(-20deg); }
+            100% { transform: translateX(200%) skewX(-20deg); }
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            margin: 10px 0 0;
+            font-size: 16px;
+            color: var(--text-primary);
+            opacity: 0.9;
+        }
+        
+        .card {
+            background-color: var(--background-card);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-primary);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 15px 0;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .pet-image {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            display: block;
+            filter: drop-shadow(0 5px 15px rgba(138, 43, 226, 0.3));
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .feature {
+            flex-basis: 48%;
+            background-color: var(--background-card);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+            border-radius: 4px 0 0 4px;
+        }
+        
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .feature h3 {
+            margin: 10px 0;
+            font-size: 16px;
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+        
+        .feature p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        
+        /* Игровые элементы */
+        .game-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .star {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background-color: white;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0% { opacity: 0.2; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0.2; }
+        }
+        
+        .pet-animation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 40px;
+            animation: bounce 2s infinite;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Виртуальный Питомец</h1>
+            <p>Создайте и ухаживайте за питомцем вместе с партнером!</p>
+        </div>
+        
+        <div class="card">
+            <img src="https://cdn-icons-png.flaticon.com/512/1998/1998627.png" alt="Питомец" class="pet-image">
+            <h2>Добро пожаловать!</h2>
+            <p>Создайте своего виртуального питомца и ухаживайте за ним вместе с партнером.</p>
+            <a href="https://t.me/PetLoveeBot" class="btn">Открыть в Telegram</a>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>Совместная забота</h3>
+                <p>Ухаживайте за питомцем вместе с партнером</p>
+            </div>
+            <div class="feature">
+                <h3>Таблица лидеров</h3>
+                <p>Соревнуйтесь с другими парами</p>
+            </div>
+            <div class="feature">
+                <h3>Уведомления</h3>
+                <p>Получайте уведомления о состоянии питомца</p>
+            </div>
+            <div class="feature">
+                <h3>Достижения</h3>
+                <p>Разблокируйте награды за заботу</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Игровые элементы -->
+    <div class="game-elements">
+        <div class="star" style="top: 10%; left: 20%;"></div>
+        <div class="star" style="top: 15%; left: 80%;"></div>
+        <div class="star" style="top: 30%; left: 50%;"></div>
+        <div class="star" style="top: 45%; left: 10%;"></div>
+        <div class="star" style="top: 60%; left: 30%;"></div>
+        <div class="star" style="top: 75%; left: 70%;"></div>
+        <div class="star" style="top: 85%; left: 40%;"></div>
+    </div>
+    
+    <div class="pet-animation">🐱</div>
+    
+    <script>
+        // Создаем звезды случайно по экрану
+        function createStars() {
+            const gameElements = document.querySelector('.game-elements');
+            for (let i = 0; i < 20; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.width = `${Math.random() * 3 + 1}px`;
+                star.style.height = star.style.width;
+                star.style.animationDelay = `${Math.random() * 3}s`;
+                gameElements.appendChild(star);
+            }
+        }
+        
+        // Анимация питомца
+        function animatePet() {
+            const pets = ['🐱', '🐶', '🐰', '🐹', '🦊'];
+            const petElement = document.querySelector('.pet-animation');
+            let currentIndex = 0;
+            
+            setInterval(() => {
+                currentIndex = (currentIndex + 1) % pets.length;
+                petElement.textContent = pets[currentIndex];
+            }, 3000);
+        }
+        
+        // Запускаем анимации при загрузке страницы
+        window.onload = function() {
+            createStars();
+            animatePet();
+        };
+    </script>
+</body>
+</html>
