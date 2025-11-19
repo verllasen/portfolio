@@ -1,0 +1,27 @@
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  padding: 24px 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 16px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 12px 8px;
+  }
+}
+
