@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: iteam-server
+    runtime: node
+    rootDir: server
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
