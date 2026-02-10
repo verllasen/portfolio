@@ -25,15 +25,19 @@ let studios = {};
 const socketToUser = {};
 
 const saveData = () => {
-    const data = {
-        users: Object.keys(users).reduce((acc, key) => {
-            // Only save data, not socket info which is ephemeral
-            acc[key] = { data: users[key].data, friendRequests: users[key].friendRequests };
-            return acc;
-        }, {}),
-        studios: studios
-    };
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    try {
+        const data = {
+            users: Object.keys(users).reduce((acc, key) => {
+                // Only save data, not socket info which is ephemeral
+                acc[key] = { data: users[key].data, friendRequests: users[key].friendRequests };
+                return acc;
+            }, {}),
+            studios: studios
+        };
+        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error('Error saving data to db.json:', error);
+    }
 };
 
 const loadData = () => {
