@@ -6,7 +6,11 @@ export const missions: Mission[] = [
     title: 'Цветочный Магазин "Blooming Dale"',
     description: 'Полный цикл разработки интернет-магазина для премиального цветочного бутика. Проект рассчитан на длительную командную работу (около 40 минут).',
     difficulty: 'Medium',
-    reward: 2500,
+    reward: {
+        money: 2500,
+        rating: 50,
+        researchPoints: 5
+    },
     status: 'available',
     globalDocs: `
 # Бриф Клиента: Blooming Dale
@@ -615,7 +619,11 @@ WHERE order_date < '2024-01-01';`
     title: 'Крипто Биржа "BitVault"',
     description: 'Высокозащищенная торговая платформа с сокетами реального времени. (Заблокировано)',
     difficulty: 'Hard',
-    reward: 1500,
+    reward: {
+      money: 5000,
+      rating: 100,
+      researchPoints: 20
+    },
     status: 'available',
     globalDocs: 'Конфиденциально.',
     requiredSpecialization: ['Backend', 'Fullstack'],
@@ -626,7 +634,11 @@ WHERE order_date < '2024-01-01';`
     title: 'Мобильная Игра "Space Runner"',
     description: '2D раннер на Unity/React Native для iOS и Android.',
     difficulty: 'Medium',
-    reward: 1200,
+    reward: {
+      money: 3000,
+      rating: 60,
+      researchPoints: 10
+    },
     status: 'available',
     globalDocs: 'ТЗ на разработку игровых механик.',
     requiredSpecialization: ['Mobile', 'GameDev'],

@@ -3,6 +3,9 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 
+const fs = require('fs');
+const path = require('path');
+
 const app = express();
 app.use(cors());
 
@@ -15,10 +18,49 @@ const io = new Server(server, {
   }
 });
 
-// In-memory storage
-const users = {}; // userId -> { socketId, userData }
-const studios = {}; // studioCode -> { members: [], ...studioData }
-const socketToUser = {}; // socketId -> userId
+// Persistence
+const DATA_FILE = path.join(__dirname, 'db.json');
+let users = {}; 
+let studios = {};
+const socketToUser = {};
+
+const saveData = () => {
+    const data = {
+        users: Object.keys(users).reduce((acc, key) => {
+            // Only save data, not socket info which is ephemeral
+            acc[key] = { data: users[key].data, friendRequests: users[key].friendRequests };
+            return acc;
+        }, {}),
+        studios: studios
+    };
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+};
+
+const loadData = () => {
+    if (fs.existsSync(DATA_FILE)) {
+        try {
+            const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+            if (data.users) {
+                // Reconstruct users object (without socket info)
+                Object.keys(data.users).forEach(key => {
+                    users[key] = {
+                        socketId: null, // Will be updated on reconnect
+                        data: data.users[key].data,
+                        friendRequests: data.users[key].friendRequests || []
+                    };
+                });
+            }
+            if (data.studios) {
+                studios = data.studios;
+            }
+            console.log('Data loaded from db.json');
+        } catch (e) {
+            console.error('Failed to load data:', e);
+        }
+    }
+};
+
+loadData();
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -27,22 +69,35 @@ io.on('connection', (socket) => {
   socket.on('register_user', (userData) => {
     if (!userData || !userData.id) return;
     
-    // Check if name is taken
-    const existingUser = Object.values(users).find(u => u.data.name.toLowerCase() === userData.name.toLowerCase() && u.data.id !== userData.id);
-    if (existingUser) {
-        socket.emit('registration_error', 'Это имя уже занято. Пожалуйста, выберите другое.');
-        return;
+    // Check if name is taken (only if creating NEW user, not reconnecting)
+    // Actually, userData.id should match.
+    // If ID exists in memory, we just update socket.
+    
+    if (!users[userData.id]) {
+        // Check name collision for NEW users
+         const existingUser = Object.values(users).find(u => u.data.name.toLowerCase() === userData.name.toLowerCase());
+         if (existingUser) {
+            socket.emit('registration_error', 'Это имя уже занято. Пожалуйста, выберите другое.');
+            return;
+         }
+         
+         users[userData.id] = {
+             socketId: socket.id,
+             data: userData,
+             friendRequests: []
+         };
+    } else {
+        // Update existing user (reconnect)
+        users[userData.id].socketId = socket.id;
+        // Merge new data (e.g. role, avatar updates)
+        users[userData.id].data = { ...users[userData.id].data, ...userData };
     }
-
-    users[userData.id] = {
-      socketId: socket.id,
-      data: userData,
-      friendRequests: [] // Incoming requests
-    };
+    
     socketToUser[socket.id] = userData.id;
     console.log(`User registered: ${userData.name} (${userData.id})`);
     
-    socket.emit('registration_success', userData);
+    socket.emit('registration_success', users[userData.id].data);
+    saveData();
     
     // Broadcast online status
     io.emit('user_status_change', { userId: userData.id, status: 'online' });
@@ -119,6 +174,7 @@ io.on('connection', (socket) => {
     }
 
     users[friendId].friendRequests.push(myId);
+    saveData();
 
     if (friendSocketId) {
         io.to(friendSocketId).emit('friend_request_received', {
@@ -135,6 +191,7 @@ io.on('connection', (socket) => {
       // Remove from pending
       if (users[myId]) {
           users[myId].friendRequests = users[myId].friendRequests.filter(id => id !== friendId);
+          saveData();
       }
 
       const friendSocketId = users[friendId]?.socketId;
@@ -178,6 +235,7 @@ io.on('connection', (socket) => {
   socket.on('reject_friend_request', ({ myId, friendId }) => {
       if (users[myId]) {
           users[myId].friendRequests = users[myId].friendRequests.filter(id => id !== friendId);
+          saveData();
       }
       // Optionally notify the sender they were rejected, but usually we just ignore
   });
@@ -214,12 +272,14 @@ io.on('connection', (socket) => {
     studios[studioData.code] = studioData;
     socket.join(studioData.code);
     console.log(`Studio created: ${studioData.name} (${studioData.code})`);
+    saveData();
     updateLeaderboard();
   });
 
   socket.on('update_studio_rating', ({ studioCode, rating }) => {
     if (studios[studioCode]) {
         studios[studioCode].rating = rating;
+        saveData();
         updateLeaderboard();
     }
   });
@@ -229,6 +289,7 @@ io.on('connection', (socket) => {
         studios[studioCode] = { ...studios[studioCode], ...updates };
         // Broadcast update to all members in the studio
         io.to(studioCode).emit('studio_profile_updated', updates);
+        saveData();
         updateLeaderboard();
     }
   });
@@ -239,6 +300,7 @@ io.on('connection', (socket) => {
           const member = studio.members.find(m => m.id === playerId);
           if (member) {
               member.role = role;
+              saveData();
               io.to(studioCode).emit('member_role_updated', { playerId, role });
               
               // System message
@@ -288,6 +350,7 @@ io.on('connection', (socket) => {
         } else {
              studio.members.push({ id: userId, name: userName, role: 'Junior' });
         }
+        saveData();
     }
 
     socket.join(studioCode);
@@ -319,6 +382,7 @@ io.on('connection', (socket) => {
 
       // Remove from memory
       studio.members = studio.members.filter(m => m.id !== userId);
+      saveData();
       
       socket.leave(studioCode);
       
@@ -345,6 +409,7 @@ io.on('connection', (socket) => {
           studio.activeMissionId = missionId;
           studio.missionStatus = 'preparing';
           studio.missionReadyMembers = playerId ? [playerId] : []; 
+          saveData();
           
           io.to(studioCode).emit('contract_taken', { missionId, status: 'preparing' });
           if (playerId) {
@@ -372,6 +437,7 @@ io.on('connection', (socket) => {
           const member = studio.members.find(m => m.id === playerId);
           if (member) {
               member.missionRole = role;
+              saveData();
               io.to(studioCode).emit('mission_role_updated', { playerId, role });
           }
       }
@@ -385,6 +451,7 @@ io.on('connection', (socket) => {
            if (!studio.missionReadyMembers) studio.missionReadyMembers = [];
            if (!studio.missionReadyMembers.includes(playerId)) {
                studio.missionReadyMembers.push(playerId);
+               saveData();
                io.to(studioCode).emit('mission_ready_update', { missionReadyMembers: studio.missionReadyMembers });
            }
       }
@@ -444,7 +511,55 @@ io.on('connection', (socket) => {
       if (studio) {
           studio.missionStatus = 'in_progress';
           studio.missionStartTime = Date.now();
+          saveData();
           io.to(studioCode).emit('mission_started');
+      }
+  });
+
+  socket.on('finish_mission', ({ studioCode, missionId, rewards }) => {
+      const studio = studios[studioCode];
+      if (studio) {
+          if (studio.activeMissionId !== missionId) return;
+
+          // Apply rewards
+          studio.money += rewards.money || 0;
+          studio.rating += rewards.rating || 0;
+          studio.researchPoints = (studio.researchPoints || 0) + (rewards.researchPoints || 0);
+          studio.completedMissions = (studio.completedMissions || 0) + 1;
+          
+          // Reset mission state
+          studio.activeMissionId = null;
+          studio.missionStatus = 'idle';
+          studio.missionReadyMembers = [];
+          studio.missionStartTime = undefined;
+          studio.missionState = { html: '', css: '', js: '', sql: '' };
+          studio.tasks = [];
+          
+          saveData();
+
+          // Broadcast success
+          io.to(studioCode).emit('mission_finished_success', {
+              rewards,
+              studio: {
+                  money: studio.money,
+                  rating: studio.rating,
+                  researchPoints: studio.researchPoints,
+                  completedMissions: studio.completedMissions
+              }
+          });
+
+          // System message
+          const message = {
+              id: Math.random().toString(36).substr(2, 9),
+              senderId: 'system',
+              senderName: 'System',
+              text: `Контракт выполнен! Получено: $${rewards.money}, Рейтинг: +${rewards.rating}, ОН: +${rewards.researchPoints}`,
+              timestamp: Date.now(),
+              system: true
+          };
+          io.to(studioCode).emit('chat_message_received', message);
+          
+          updateLeaderboard();
       }
   });
 
@@ -454,6 +569,7 @@ io.on('connection', (socket) => {
           studio.missionStatus = 'idle';
           studio.activeMissionId = null;
           studio.missionReadyMembers = [];
+          saveData();
           io.to(studioCode).emit('mission_cancelled');
       }
   });

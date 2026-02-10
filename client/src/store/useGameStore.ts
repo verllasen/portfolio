@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { io } from 'socket.io-client';
-import type { GameState, Role, Player, Team, LeaderboardEntry, Friend } from '../types';
+import type { GameState, Role, Player, Team, LeaderboardEntry, Friend, MissionReward } from '../types';
 import { missions as initialMissions } from '../data/missions';
 import { researchTree } from '../data/research';
 import { shopItems } from '../data/shop';
@@ -71,12 +71,8 @@ export const useGameStore = create<GameState>()(
             // Re-identify if we have a user
             const { currentUser } = get();
             if (currentUser) {
-                socket.emit('register_user', { 
-                    id: currentUser.id, 
-                    name: currentUser.name, 
-                    friendCode: currentUser.friendCode,
-                    title: currentUser.title 
-                });
+                // Send FULL profile on reconnect to ensure role/avatar persistence
+                socket.emit('register_user', currentUser);
                 socket.emit('update_status', { status: 'online' });
             }
         });
@@ -145,6 +141,25 @@ export const useGameStore = create<GameState>()(
                     view: 'lobby'
                 });
                 addNotification('Отмена', 'Проект был отменен руководством.', 'warning');
+            }
+       });
+
+       socket.on('mission_finished_success', (data: { rewards: MissionReward, studio: Partial<Team> }) => {
+            const { team, addNotification } = get();
+            if (team) {
+                set({ 
+                    team: { 
+                        ...team, 
+                        ...data.studio,
+                        activeMissionId: null,
+                        missionStatus: 'idle',
+                        missionReadyMembers: [],
+                        missionStartTime: undefined,
+                        missionState: { html: '', css: '', js: '', sql: '' } // Reset code
+                    },
+                    view: 'lobby'
+                });
+                addNotification('Успех!', `Контракт выполнен! +$${data.rewards.money}, Рейтинг +${data.rewards.rating}`, 'success');
             }
        });
         
@@ -451,6 +466,7 @@ export const useGameStore = create<GameState>()(
           missionReadyMembers: [],
           missionStartTime: undefined,
           missionState: { html: '', css: '', js: '', sql: '' },
+          tasks: [],
           researchTree: [],
           inventory: [],
           pendingMembers: [],
@@ -555,7 +571,7 @@ export const useGameStore = create<GameState>()(
       },
 
       startMission: () => {
-        const { team, currentUser, addNotification } = get();
+        const { team, currentUser, addNotification, availableMissions } = get();
         if (!team || !currentUser) return;
         
         const allowedRoles = ['Руководитель', 'TeamLead', 'Заместитель'];
@@ -570,14 +586,24 @@ export const useGameStore = create<GameState>()(
            return;
         }
 
+        const mission = availableMissions.find(m => m.id === team.activeMissionId);
+        if (!mission) {
+            addNotification('Ошибка', 'Контракт не найден', 'error');
+            return;
+        }
+
         // Emit event to server
         socket.emit('start_mission', { studioCode: team.code });
+        
+        // Sync tasks to server
+        socket.emit('update_studio_profile', { studioCode: team.code, updates: { tasks: mission.tasks } });
 
         set({ 
           team: { 
             ...team, 
             missionStatus: 'in_progress',
-            missionStartTime: Date.now() 
+            missionStartTime: Date.now(),
+            tasks: mission.tasks
           },
           view: 'workspace'
         });
@@ -617,88 +643,82 @@ export const useGameStore = create<GameState>()(
       },
 
       finishMission: () => {
-         const { team, addNotification } = get();
-         if (!team) return;
+         const { team, currentUser, availableMissions, addNotification } = get();
+         if (!team || !currentUser) return;
 
-         // Calculate rewards
-         const newCompletedMissions = (team.completedMissions || 0) + 1;
-         let earnedResearchPoints = 0;
-         
-         // Award 1 Research Point for every 2 completed missions
-         if (newCompletedMissions % 2 === 0) {
-             earnedResearchPoints = 1;
+         // Permission Check
+         const allowedRoles = ['Руководитель', 'TeamLead', 'Заместитель'];
+         if (!allowedRoles.includes(currentUser.role)) {
+             addNotification('Ошибка', 'Сдать проект могут только Руководитель, Заместитель или TeamLead', 'error');
+             return;
          }
 
-         set({ 
-            team: {
-                ...team,
-                completedMissions: newCompletedMissions,
-                researchPoints: (team.researchPoints || 0) + earnedResearchPoints,
-                activeMissionId: null, // Reset active mission
-                missionStatus: 'idle',
-                missionReadyMembers: [],
-                missionStartTime: undefined,
-                missionState: { html: '', css: '', js: '', sql: '' }
-            },
-            view: 'report' 
+         const mission = availableMissions.find(m => m.id === team.activeMissionId);
+         if (!mission) return;
+
+         // Verify all tasks are completed using TEAM state (synced)
+         const tasks = team.tasks || [];
+         const allTasksCompleted = tasks.length > 0 && tasks.every(t => t.completed);
+         
+         if (!allTasksCompleted) {
+             addNotification('Ошибка', 'Не все задачи выполнены! Проверьте статус этапов.', 'error');
+             return;
+         }
+
+         // Verify Code Quality (Simple simulation for now)
+         // In a real app, we would run tests here. 
+         // For now, we assume if tasks are marked completed (via completeStage), code is good enough.
+         
+         socket.emit('finish_mission', { 
+             studioCode: team.code, 
+             missionId: mission.id,
+             rewards: mission.reward // Passing rewards from client for MVP simplicity
          });
-         
-         addNotification('Миссия Завершена', 'Отличная работа! Контракт выполнен.', 'success');
-         
-         if (earnedResearchPoints > 0) {
-             setTimeout(() => {
-                 addNotification('Награда', '+1 Очко Науки (за 2 контракта)', 'success');
-             }, 500);
-         }
+
+         // Optimistic update handled by socket listener 'mission_finished_success'
+         addNotification('Отправка', 'Проверка контракта заказчиком...', 'info');
       },
 
       completeStage: (taskId, playerId) => {
-        const { availableMissions, team, currentUser, addNotification } = get();
+        const { team, currentUser, addNotification } = get();
         if (!team || !team.activeMissionId || !currentUser) return;
 
-        let xpReward = 50; // Base XP for stage
+        const currentTasks = team.tasks || [];
+        let xpReward = 50; 
         let bonusXp = 0;
+        let tasksUpdated = false;
 
-        const updatedMissions = availableMissions.map(mission => {
-          if (mission.id === team.activeMissionId) {
-            
-            // Mark task as completed
-            return {
-              ...mission,
-              tasks: mission.tasks.map(task => {
-                if (task.id === taskId) {
-                  const nextStageIndex = task.currentStageIndex + 1;
-                  const isFinished = nextStageIndex >= task.stages.length;
-                  
-                  // Logic: If user completed it, they get XP.
-                  // In this simple model, we assume this call means "User successfully completed the current stage"
-                  // If multiple people work on it, the first one to call this wins the bonus.
-                  
-                  // Base XP for stage
-                  xpReward = 50; 
-                  
-                  // Check if it's the player who clicked (it always is in this function call context)
-                  if (playerId === currentUser.id) {
-                     bonusXp = 10; // First completion bonus (simplified)
-                  }
+        const updatedTasks = currentTasks.map(task => {
+            if (task.id === taskId) {
+                // If already completed, ignore
+                if (task.completed) return task;
 
-                  return { 
+                const nextStageIndex = task.currentStageIndex + 1;
+                const isFinished = nextStageIndex >= task.stages.length;
+                  
+                // Base XP for stage
+                xpReward = 50; 
+                  
+                // Check if it's the player who clicked
+                if (playerId === currentUser.id) {
+                     bonusXp = 10;
+                }
+
+                tasksUpdated = true;
+                return { 
                     ...task, 
                     currentStageIndex: isFinished ? task.currentStageIndex : nextStageIndex,
                     completed: isFinished
-                  };
-                }
-                return task;
-              })
-            };
-          }
-          return mission;
+                };
+            }
+            return task;
         });
 
-        // Check if ALL tasks in the active mission are completed
-        const activeMission = updatedMissions.find(m => m.id === team.activeMissionId);
-        if (activeMission && activeMission.tasks.every(t => t.completed)) {
-           // Mission is fully complete!
+        if (!tasksUpdated) return;
+
+        // Check if ALL tasks are completed
+        const allCompleted = updatedTasks.every(t => t.completed);
+        if (allCompleted) {
            setTimeout(() => {
              get().finishMission();
            }, 1500);
@@ -716,7 +736,6 @@ export const useGameStore = create<GameState>()(
            let newLevel = member.stats.level;
            if (newXp >= newLevel * 1000) {
               newLevel++;
-              // If it's the current user, notify
               if (member.id === currentUser.id) {
                  addNotification('Уровень Повышен!', `Вы достигли ${newLevel} уровня!`, 'success');
               }
@@ -727,22 +746,26 @@ export const useGameStore = create<GameState>()(
              stats: {
                ...member.stats,
                xp: newXp,
-               level: newLevel,
-               // If finished, increment completedMissions? Only if whole mission done.
+               level: newLevel
              }
            };
         });
         
+        // Sync to server
+        socket.emit('update_studio_profile', { 
+            studioCode: team.code, 
+            updates: { 
+                tasks: updatedTasks,
+                members: updatedMembers 
+            } 
+        });
+
         set({ 
-           availableMissions: updatedMissions,
-           team: { ...team, members: updatedMembers }
+           team: { ...team, members: updatedMembers, tasks: updatedTasks }
         });
         
         if (playerId === currentUser.id) {
            addNotification('Этап Завершен', `+${20 + xpReward + bonusXp} XP (Личный вклад + Бонус)`, 'success');
-        } else {
-           // This notification logic is tricky because this function runs on one client.
-           // In a real app, socket would broadcast. Here we simulate local update.
         }
       },
 

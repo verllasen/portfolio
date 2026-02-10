@@ -90,7 +90,7 @@ export const Dashboard: React.FC = () => {
                     }`}>
                       {mission.difficulty === 'Easy' ? 'Легко' : mission.difficulty === 'Medium' ? 'Средне' : 'Сложно'}
                     </span>
-                    <span className="text-green-400 font-mono font-bold">+${mission.reward}</span>
+                    <span className="text-green-400 font-mono font-bold">+${mission.reward.money}</span>
                   </div>
 
                   <h3 className="text-2xl font-bold text-white mb-2">{mission.title}</h3>

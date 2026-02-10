@@ -95,12 +95,18 @@ export interface Task {
   completed: boolean;
 }
 
+export interface MissionReward {
+  money: number;
+  rating: number;
+  researchPoints: number;
+}
+
 export interface Mission {
   id: string;
   title: string;
   description: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
-  reward: number;
+  reward: MissionReward;
   tasks: Task[];
   status: 'available' | 'in_progress' | 'completed';
   globalDocs: string; // Shared documentation
@@ -128,6 +134,7 @@ export interface Team {
   missionReadyMembers: string[]; // IDs of members ready for mission
   missionStartTime?: number;
   missionState: MissionState; // Shared code repository
+  tasks: Task[]; // Shared task progress
   researchTree: ResearchNode[];
   inventory: ShopItem[];
   avatar?: string;

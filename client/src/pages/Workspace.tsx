@@ -23,7 +23,8 @@ export const Workspace: React.FC = () => {
   const mission = availableMissions.find(m => m.id === team.activeMissionId);
   if (!mission) return null;
 
-  const myTask = mission.tasks.find(t => t.role === currentUser.missionRole);
+  const tasks = team.tasks && team.tasks.length > 0 ? team.tasks : mission.tasks;
+  const myTask = tasks.find(t => t.role === currentUser.missionRole);
   const currentStage = myTask ? myTask.stages[myTask.currentStageIndex] : null;
   
   const TECH_ROLES = ['HTML', 'CSS', 'JS', 'SQL'];

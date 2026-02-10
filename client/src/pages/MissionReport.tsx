@@ -24,9 +24,9 @@ export const MissionReport: React.FC = () => {
     useGameStore.setState(state => ({
       team: state.team ? {
         ...state.team,
-        money: state.team.money + (mission?.reward || 0),
-        rating: state.team.rating + 15,
-        researchPoints: (state.team.researchPoints || 0) + (mission?.difficulty === 'Hard' ? 3 : mission?.difficulty === 'Medium' ? 2 : 1),
+        money: state.team.money + (mission?.reward.money || 0),
+        rating: state.team.rating + (mission?.reward.rating || 0),
+        researchPoints: (state.team.researchPoints || 0) + (mission?.reward.researchPoints || 0),
         activeMissionId: null,
         missionStatus: 'idle',
         missionReadyMembers: [],
@@ -83,7 +83,7 @@ export const MissionReport: React.FC = () => {
             <div className="w-12 h-12 rounded-xl bg-yellow-500/10 text-yellow-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Star size={24} />
             </div>
-            <div className="text-3xl font-bold font-mono mb-1">+{mission.reward} $</div>
+            <div className="text-3xl font-bold font-mono mb-1">+{mission.reward.money} $</div>
             <div className="text-xs text-white/40 uppercase tracking-wider font-bold">Награда Студии</div>
           </div>
 
