@@ -1,7 +1,7 @@
 {
   "name": "client",
   "private": true,
-  "version": "0.2.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -17,7 +17,7 @@
     "appId": "com.iteam.launcher",
     "productName": "ITeam Launcher",
     "directories": {
-      "output": "release_v0.2.0"
+      "output": "release_v1.0.0"
     },
     "files": [
       "dist/**/*",

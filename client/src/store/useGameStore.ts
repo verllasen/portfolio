@@ -8,9 +8,9 @@ import { shopItems } from '../data/shop';
 import menuTheme from '../assets/music/menu_theme.mp3';
 
 // Connect to Socket.IO server
-// Default to local server for development/local release. 
-// Change to 'https://iteam-server.onrender.com' for online production.
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3000';
+// Default to Render (Online) for production/deployment.
+// Local development will override this via VITE_SERVER_URL env var.
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://iteam-server.onrender.com';
 const socket = io(SERVER_URL);
 
 export const useGameStore = create<GameState>()(

@@ -9,6 +9,11 @@ const path = require('path');
 const app = express();
 app.use(cors());
 
+// Health check route for Render
+app.get('/', (req, res) => {
+    res.send('ITeam Server is running correctly');
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
   maxHttpBufferSize: 1e8, // 100 MB
@@ -24,20 +29,30 @@ let users = {};
 let studios = {};
 const socketToUser = {};
 
+let saveTimeout = null;
 const saveData = () => {
-    try {
-        const data = {
-            users: Object.keys(users).reduce((acc, key) => {
-                // Only save data, not socket info which is ephemeral
-                acc[key] = { data: users[key].data, friendRequests: users[key].friendRequests };
-                return acc;
-            }, {}),
-            studios: studios
-        };
-        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-    } catch (error) {
-        console.error('Error saving data to db.json:', error);
-    }
+    // Debounce save to avoid disk trashing
+    if (saveTimeout) clearTimeout(saveTimeout);
+    
+    saveTimeout = setTimeout(() => {
+        try {
+            const data = {
+                users: Object.keys(users).reduce((acc, key) => {
+                    // Only save data, not socket info which is ephemeral
+                    acc[key] = { data: users[key].data, friendRequests: users[key].friendRequests };
+                    return acc;
+                }, {}),
+                studios: studios
+            };
+            
+            // Async write to not block event loop
+            fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), (err) => {
+                if (err) console.error('Error saving data:', err);
+            });
+        } catch (error) {
+            console.error('Error preparing data for save:', error);
+        }
+    }, 1000); // Wait 1 second after last change
 };
 
 const loadData = () => {
