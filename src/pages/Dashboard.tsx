@@ -287,7 +287,6 @@ export default function Dashboard() {
 
   const handleCallUser = (friendId: string) => {
      setActiveTab('calls');
-     const friend = friends.find(f => f.id === friendId);
      // Note: Call logic via socket can be wired up here
      socket.emit('call-user', { userToCall: friendId, signalData: {}, from: user?.id, name: user?.name });
   };
