@@ -6,30 +6,42 @@ import Dashboard from './pages/Dashboard';
 import { useStore } from './store/useStore';
 import appLogo from './assets/avatar.jpg';
 
-function TitleBar() {
-  const minimize = () => window.electronAPI?.windowMinimize();
-  const maximize = () => window.electronAPI?.windowMaximize();
-  const close = () => window.electronAPI?.windowClose();
-
+// Custom titlebar for Windows desktop version
+const TitleBar = () => {
+  // Only show titlebar in desktop app
+  if (!(window as any).electron) return null;
+  
   return (
-    <div className="absolute top-0 left-0 right-0 h-12 flex justify-between items-center select-none z-50 px-6 bg-[#000000]" style={{ WebkitAppRegion: 'drag' } as any}>
-      <div className="text-[11px] text-zinc-500 font-medium tracking-widest uppercase flex items-center gap-2">
-        FRIENDLY WORKSPACE
+    <div className="h-8 w-full bg-[#0a0a0a] flex justify-between items-center fixed top-0 left-0 z-50 select-none" style={{ WebkitAppRegion: 'drag' } as any}>
+      <div className="flex items-center px-3 gap-2">
+        <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
+          <div className="w-2 h-2 bg-black rounded-full"></div>
+        </div>
+        <span className="text-xs text-[#888] font-medium tracking-wider">FRIENDLY</span>
       </div>
-      <div className="flex h-full items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as any}>
-        <button onClick={minimize} className="w-7 h-7 rounded-full hover:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
-          <Minus size={14} />
+      <div className="flex h-full" style={{ WebkitAppRegion: 'no-drag' } as any}>
+        <button 
+          onClick={() => (window as any).electron.minimize()}
+          className="w-12 h-full flex items-center justify-center text-[#888] hover:bg-[#222] hover:text-white transition-colors"
+        >
+          <Minus size={16} />
         </button>
-        <button onClick={maximize} className="w-7 h-7 rounded-full hover:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
-          <Square size={12} />
+        <button 
+          onClick={() => (window as any).electron.maximize()}
+          className="w-12 h-full flex items-center justify-center text-[#888] hover:bg-[#222] hover:text-white transition-colors"
+        >
+          <Square size={14} />
         </button>
-        <button onClick={close} className="w-7 h-7 rounded-full hover:bg-red-500/20 hover:text-red-500 flex items-center justify-center text-zinc-400 transition-colors">
-          <X size={14} />
+        <button 
+          onClick={() => (window as any).electron.close()}
+          className="w-12 h-full flex items-center justify-center text-[#888] hover:bg-red-500 hover:text-white transition-colors"
+        >
+          <X size={16} />
         </button>
       </div>
     </div>
   );
-}
+};
 
 function SplashScreen() {
   return (
