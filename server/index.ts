@@ -103,10 +103,12 @@ app.post('/api/groups/join', (req, res) => {
     return res.status(404).json({ error: 'Сервер не найден' });
   }
   
-  if (!group.members.includes(userId)) {
-    group.members.push(userId);
-    writeDB(db);
+  if (group.members.includes(userId)) {
+    return res.status(400).json({ error: 'Вы уже состоите в этой группе' });
   }
+  
+  group.members.push(userId);
+  writeDB(db);
   
   res.json(group);
 });
@@ -240,7 +242,23 @@ app.get('/api/friends/:userId', (req, res) => {
 // Messages routes
 app.get('/api/messages/:roomId', (req, res) => {
   const db = readDB();
-  const roomMessages = db.messages.filter((m: any) => m.roomId === req.params.roomId);
+  const roomId = req.params.roomId;
+  const userId = req.query.userId;
+  
+  // For group channels, just get messages for the room
+  // For DMs, get messages where roomId=friendId AND senderId=myId OR roomId=myId AND senderId=friendId
+  let roomMessages = db.messages.filter((m: any) => m.roomId === roomId);
+  
+  if (userId) {
+     const dmMessages = db.messages.filter((m: any) => 
+       (m.senderId === userId && m.roomId === roomId) || 
+       (m.senderId === roomId && m.roomId === userId)
+     );
+     // Combine and deduplicate
+     const allMsg = [...roomMessages, ...dmMessages];
+     roomMessages = Array.from(new Map(allMsg.map(m => [m.id, m])).values());
+  }
+  
   res.json(roomMessages);
 });
 
