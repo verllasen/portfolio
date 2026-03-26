@@ -76,6 +76,9 @@ interface AppState {
   setFriendsTab: (tab: 'all' | 'pending' | 'add') => void;
   setSettingsTab: (tab: 'profile' | 'notifications' | 'appearance' | 'audio' | 'about') => void;
   setOnlineUsers: (users: User[]) => void;
+  setGroups: (groups: Group[]) => void;
+  setMessages: (messages: Message[]) => void;
+  setChannels: (channels: Channel[]) => void;
   
   addMessage: (msg: Message) => void;
   deleteMessage: (msgId: string) => void;
@@ -123,6 +126,9 @@ export const useStore = create<AppState>((set, get) => ({
   setFriendsTab: (tab) => set({ friendsTab: tab }),
   setSettingsTab: (tab) => set({ settingsTab: tab }),
   setOnlineUsers: (users) => set({ onlineUsers: users }),
+  setGroups: (groups) => set({ groups }),
+  setMessages: (messages) => set({ messages }),
+  setChannels: (channels) => set({ channels }),
   
   addMessage: (msg) => set((state) => ({ messages: [...state.messages, msg] })),
   deleteMessage: (msgId) => set((state) => ({ messages: state.messages.filter(m => m.id !== msgId) })),
