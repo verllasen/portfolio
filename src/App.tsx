@@ -8,8 +8,24 @@ import appLogo from './assets/avatar.jpg';
 
 // Custom titlebar for Windows desktop version
 const TitleBar = () => {
-  // Only show titlebar in desktop app
-  if (!(window as any).electron) return null;
+  // Try to detect if we are in Electron. We'll show the title bar just in case
+  const isElectron = true; // Force show since we build an exe
+  if (!isElectron) return null;
+
+  const handleMinimize = () => {
+    if ((window as any).electron?.minimize) (window as any).electron.minimize();
+    else if ((window as any).electronAPI?.windowMinimize) (window as any).electronAPI.windowMinimize();
+  };
+
+  const handleMaximize = () => {
+    if ((window as any).electron?.maximize) (window as any).electron.maximize();
+    else if ((window as any).electronAPI?.windowMaximize) (window as any).electronAPI.windowMaximize();
+  };
+
+  const handleClose = () => {
+    if ((window as any).electron?.close) (window as any).electron.close();
+    else if ((window as any).electronAPI?.windowClose) (window as any).electronAPI.windowClose();
+  };
   
   return (
     <div className="h-8 w-full bg-[#0a0a0a] flex justify-between items-center fixed top-0 left-0 z-50 select-none" style={{ WebkitAppRegion: 'drag' } as any}>
@@ -21,19 +37,19 @@ const TitleBar = () => {
       </div>
       <div className="flex h-full" style={{ WebkitAppRegion: 'no-drag' } as any}>
         <button 
-          onClick={() => (window as any).electron.minimize()}
+          onClick={handleMinimize}
           className="w-12 h-full flex items-center justify-center text-[#888] hover:bg-[#222] hover:text-white transition-colors"
         >
           <Minus size={16} />
         </button>
         <button 
-          onClick={() => (window as any).electron.maximize()}
+          onClick={handleMaximize}
           className="w-12 h-full flex items-center justify-center text-[#888] hover:bg-[#222] hover:text-white transition-colors"
         >
           <Square size={14} />
         </button>
         <button 
-          onClick={() => (window as any).electron.close()}
+          onClick={handleClose}
           className="w-12 h-full flex items-center justify-center text-[#888] hover:bg-red-500 hover:text-white transition-colors"
         >
           <X size={16} />
@@ -90,8 +106,9 @@ function App() {
   }, []);
 
   return (
-    <div className="h-screen w-screen relative overflow-hidden bg-black">
+    <div className="h-screen w-screen relative overflow-hidden bg-black" style={{ WebkitAppRegion: 'drag' } as any}>
       <TitleBar />
+      <div style={{ WebkitAppRegion: 'no-drag', height: '100%', width: '100%', paddingTop: '32px' } as any} className="absolute inset-0">
       <AnimatePresence mode="wait">
         {!isAppLoaded ? (
           <SplashScreen key="splash" />
@@ -119,6 +136,7 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }
