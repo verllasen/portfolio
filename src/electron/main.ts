@@ -12,13 +12,13 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
-let win: BrowserWindow | null
+let mainWindow: BrowserWindow | null = null;
 
 function createWindow() {
-  win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    minWidth: 900,
+    minWidth: 800,
     minHeight: 600,
     frame: false,
     backgroundColor: '#000000', // Pure black
@@ -27,37 +27,56 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
-  })
+  });
 
-  // IPC to handle window controls
-  ipcMain.on('window-min', () => win?.minimize())
-  ipcMain.on('window-max', () => {
-    if (win?.isMaximized()) {
-      win?.unmaximize()
-    } else {
-      win?.maximize()
+  // IPC handlers for custom titlebar
+  ipcMain.removeAllListeners('window-minimize');
+  ipcMain.on('window-minimize', () => {
+    if (mainWindow) mainWindow.minimize();
+  });
+
+  ipcMain.removeAllListeners('window-maximize');
+  ipcMain.on('window-maximize', () => {
+    if (mainWindow) {
+      if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize();
+      } else {
+        mainWindow.maximize();
+      }
     }
-  })
-  ipcMain.on('window-close', () => win?.close())
+  });
 
+  ipcMain.removeAllListeners('window-close');
+  ipcMain.on('window-close', () => {
+    if (mainWindow) mainWindow.close();
+  });
+
+  // В режиме разработки загружаем с локального сервера Vite
   if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL)
+    mainWindow.loadURL(VITE_DEV_SERVER_URL);
+    mainWindow.webContents.openDevTools();
   } else {
-    win.loadFile(path.join(RENDERER_DIST, 'index.html'))
+    // В продакшене загружаем собранные файлы
+    mainWindow.loadFile(path.join(RENDERER_DIST, 'index.html'));
   }
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
 }
+
+app.whenReady().then(() => {
+  createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit()
-    win = null
+    app.quit();
   }
-})
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
-  }
-})
-
-app.whenReady().then(createWindow)
+});
