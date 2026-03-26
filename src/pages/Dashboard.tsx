@@ -73,9 +73,24 @@ export default function Dashboard() {
 
     const handleUsers = (usersList: any[]) => setOnlineUsers(usersList);
     const handleMessage = (msg: any) => {
-      addMessage(msg);
+      // If we are currently in this exact chat, append the message
+      const isForCurrentRoom = 
+        (activeTab === 'groups' && msg.roomId === activeRoom) ||
+        (activeTab === 'friends' && (
+          (msg.senderId === user?.id && msg.roomId === activeRoom) || 
+          (msg.senderId === activeRoom && msg.roomId === user?.id)
+        ));
+
+      if (isForCurrentRoom) {
+         addMessage(msg);
+      } else {
+         // Optionally, add to store even if not in room to avoid refetching, but this can get tricky.
+         // At least add it to store so it's there.
+         addMessage(msg);
+      }
+
       // If message is not from current user and we're not in that room
-      if (msg.senderId !== user?.id && msg.roomId !== activeRoom) {
+      if (msg.senderId !== user?.id && !isForCurrentRoom) {
         if (localStorage.getItem('chatSound') !== 'false') playNotificationSound();
         if (localStorage.getItem('sysNotifications') !== 'false' && 'Notification' in window && Notification.permission === 'granted') {
           new Notification(`New message from ${msg.senderName}`, {
@@ -139,18 +154,23 @@ export default function Dashboard() {
   useEffect(() => {
     if (activeRoom) {
       const API_URL = import.meta.env.PROD ? 'https://friendly-server-w6zh.onrender.com/api' : 'http://localhost:3001/api';
-      fetch(`${API_URL}/messages/${activeRoom}`)
+      const userIdParam = user ? `?userId=${user.id}` : '';
+      fetch(`${API_URL}/messages/${activeRoom}${userIdParam}`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {
             // Keep existing messages from other rooms, just update this room's messages
-            const otherMessages = useStore.getState().messages.filter(m => m.roomId !== activeRoom);
+            const otherMessages = useStore.getState().messages.filter(m => 
+              m.roomId !== activeRoom && 
+              !(m.senderId === user?.id && m.roomId === activeRoom) &&
+              !(m.senderId === activeRoom && m.roomId === user?.id)
+            );
             useStore.getState().setMessages([...otherMessages, ...data]);
           }
         })
         .catch(err => console.error('Failed to fetch messages:', err));
     }
-  }, [activeRoom]);
+  }, [activeRoom, user]);
 
   // Request notification permissions
   useEffect(() => {
@@ -211,7 +231,7 @@ export default function Dashboard() {
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!msgInput.trim() && !attachment) || !user) return;
+    if ((!msgInput.trim() && !attachment) || !user || !activeRoom) return;
     
     const newMsg = {
       id: Date.now().toString(),
@@ -263,6 +283,13 @@ export default function Dashboard() {
         console.error(err);
       }
     }
+  };
+
+  const handleCallUser = (friendId: string) => {
+     setActiveTab('calls');
+     const friend = friends.find(f => f.id === friendId);
+     // Note: Call logic via socket can be wired up here
+     socket.emit('call-user', { userToCall: friendId, signalData: {}, from: user?.id, name: user?.name });
   };
 
   const handleAcceptFriend = async (friendId: string) => {
@@ -329,7 +356,8 @@ export default function Dashboard() {
           setJoinGroupInput('');
           setShowJoinGroupModal(false);
         } else {
-          alert("Неверный код приглашения или вы уже состоите в группе.");
+          const data = await res.json();
+          alert(data.error || "Неверный код приглашения");
         }
       } catch (err) {
         console.error("Failed to join group", err);
@@ -412,9 +440,13 @@ export default function Dashboard() {
   const roomName = activeChannelData ? activeChannelData.name : (activeFriendData ? activeFriendData.name : '');
   const isVoiceChannel = activeChannelData?.type === 'voice';
 
-  const [showMembers, setShowMembers] = useState(false);
+  // Find messages where roomId is either the channel ID or the friend ID
+  // For DMs, messages can be sent with roomId = friendId (from me) or roomId = myId (from friend)
+  // (Moved lower to fix scope)
 
   const [currentVoiceRoom, setCurrentVoiceRoom] = useState<string | null>(null);
+
+  const [showMembers, setShowMembers] = useState(false);
 
   // Handle local media stream
   useEffect(() => {
@@ -527,7 +559,12 @@ export default function Dashboard() {
     }
   };
 
-  const filteredMessages = messages.filter(m => m.roomId === activeRoom);
+  const filteredMessages = messages.filter(m => {
+    if (activeTab === 'groups') return m.roomId === activeRoom;
+    // For DMs:
+    return (m.senderId === user?.id && m.roomId === activeRoom) || 
+           (m.senderId === activeRoom && m.roomId === user?.id);
+  });
 
   return (
     <div className="h-screen w-full p-6 flex gap-6 overflow-hidden relative z-10 pt-14 bg-black">
@@ -726,7 +763,7 @@ export default function Dashboard() {
                             <div 
                               key={f.id} 
                               onClick={() => setActiveRoom(f.id)}
-                              className={`p-3 rounded-xl flex items-center justify-between cursor-pointer transition-colors mb-1 ${activeRoom === f.id ? 'bg-[#1a1a1a]' : 'hover:bg-[#111]'}`}
+                              className={`p-3 rounded-xl flex items-center justify-between cursor-pointer transition-colors mb-1 group ${activeRoom === f.id ? 'bg-[#1a1a1a]' : 'hover:bg-[#111]'}`}
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-[#222] flex items-center justify-center relative shrink-0">
@@ -872,8 +909,8 @@ export default function Dashboard() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <HeaderButton icon={<Phone className="w-5 h-5" />} onClick={() => setActiveTab('calls')} />
-                  <HeaderButton icon={<Video className="w-5 h-5" />} onClick={() => setActiveTab('calls')} />
+                  <HeaderButton icon={<Phone className="w-5 h-5" />} onClick={() => handleCallUser(activeRoom)} />
+                  <HeaderButton icon={<Video className="w-5 h-5" />} onClick={() => handleCallUser(activeRoom)} />
                   {activeTab === 'groups' && (
                     <>
                       <div className="w-px h-6 bg-[#222] mx-2"></div>
