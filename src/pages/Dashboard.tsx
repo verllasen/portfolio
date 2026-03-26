@@ -566,7 +566,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="h-screen w-full p-6 flex gap-6 overflow-hidden relative z-10 pt-14 bg-black">
+    <div className="h-full w-full p-6 flex gap-6 overflow-hidden relative z-10 pt-4 bg-black">
       
       {/* Groups Sidebar Navigation (Discord Style) */}
       <nav className="w-20 panel flex flex-col items-center py-4 gap-4 shrink-0 overflow-y-auto">
