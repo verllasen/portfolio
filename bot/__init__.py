@@ -1,0 +1,1 @@
+"""MajesticRP family contracts bot."""
