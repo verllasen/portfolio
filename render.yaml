@@ -1,0 +1,10 @@
+services:
+  - type: worker
+    name: corso-family-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m bot.main
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
