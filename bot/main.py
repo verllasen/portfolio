@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import logging
+import os
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import discord
@@ -18,6 +21,35 @@ from bot.ui.styles import Palette, make_embed
 
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("majestic-contracts-bot")
+
+
+class _HealthcheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self) -> None:  # noqa: N802
+        if self.path in ("/", "/health"):
+            payload = b"ok"
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+            return
+        self.send_response(404)
+        self.end_headers()
+
+    def log_message(self, format: str, *args: object) -> None:
+        return
+
+
+def _start_healthcheck_server() -> None:
+    port_raw = os.getenv("PORT", "10000")
+    try:
+        port = int(port_raw)
+    except ValueError:
+        port = 10000
+    server = ThreadingHTTPServer(("0.0.0.0", port), _HealthcheckHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True, name="healthcheck-server")
+    thread.start()
+    logger.info("Healthcheck server listening on :%s", port)
 
 
 class MajesticContractsBot(commands.Bot):
@@ -251,6 +283,7 @@ def main() -> None:
     config = load_config(root)
     bot = MajesticContractsBot(config)
     register_commands(bot)
+    _start_healthcheck_server()
     bot.run(config.token, log_handler=None)
 
 
