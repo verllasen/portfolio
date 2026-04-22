@@ -64,7 +64,7 @@ class MajesticContractsBot(commands.Bot):
         super().__init__(
             command_prefix="!",
             intents=intents,
-            activity=discord.CustomActivity(name="!setup_post • !setup_promotion • !setup_family"),
+            activity=discord.CustomActivity(name="CORSO · контракты · семья · аудит"),
         )
         self.config = config
         self.db = Database(config.database_path)
@@ -110,7 +110,7 @@ class MajesticContractsBot(commands.Bot):
             logger.warning("guild_id is not configured, commands were synced globally.")
 
     async def on_ready(self) -> None:
-        await self.change_presence(activity=discord.CustomActivity(name="!setup_post • !setup_promotion • !setup_family"))
+        await self.change_presence(activity=discord.CustomActivity(name="CORSO · контракты · семья · аудит"))
         logger.info("Logged in as %s (%s)", self.user, self.user.id if self.user else "unknown")
 
     async def on_message(self, message: discord.Message) -> None:
