@@ -390,8 +390,6 @@ class AuditFeature:
             if removed_roles:
                 embed.add_field(name="Снятые роли", value=", ".join(removed_roles)[:1024], inline=False)
             await self._send(guild, cfg.audit_roles_channel_id, embed)
-            if server_log_channel_id:
-                await self._send(guild, server_log_channel_id, embed)
             return
 
         if entry.action == discord.AuditLogAction.member_update and cfg.audit_roles_channel_id:
