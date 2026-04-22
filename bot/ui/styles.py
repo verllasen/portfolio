@@ -99,7 +99,7 @@ def contract_overview_embed(contract_title: str, description: str, payout: int, 
         "Контракт закреплён",
         f"**{contract_title}**\n\n"
         f"{description}\n\n"
-        "Дальше: кнопка **Заполнить отчёт** → дата и участники → **1–5 фото** одним сообщением.",
+        "**Сдача:** **Заполнить отчёт** → короткая форма → **одно сообщение с 1–5 скринами** в тот же канал.",
         color=Palette.SUCCESS,
     )
     embed.add_field(name="Выплата", value=f"**{payout}** {currency_name}", inline=True)
@@ -109,10 +109,14 @@ def contract_overview_embed(contract_title: str, description: str, payout: int, 
 
 def control_panel_embed(*, use_brand_images: bool) -> discord.Embed:
     lines = [
-        "### Добро пожаловать в **CORSO**",
+        "### Панель контрактов **CORSO**",
         "",
-        "Выберите контракт, выполните его и нажмите **Заполнить отчёт**.",
-        "После формы отправьте 1-5 фото одним сообщением.",
+        "1. Выбери контракт в меню",
+        "2. Выполни на сервере",
+        "3. **Заполнить отчёт** — пара полей и опциональная заметка",
+        "4. Одним сообщением — **1–5 скринов** в этот же канал",
+        "",
+        "**Мои активные** — список и статусы.",
     ]
     embed = _embed_base(
         "━━ CORSO · Контракты ━━",
